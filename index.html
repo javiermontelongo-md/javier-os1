@@ -1376,6 +1376,36 @@ async function evalAns(){
 /* ============================================================
    DATA
    ============================================================ */
+// ============================================================
+// CANONICAL DATA STORE — updated by Claude after every session
+// ============================================================
+const CANONICAL = {
+  lastUpdated: "2026-05-15",
+  uworldSessions: [],
+  journalEntries: [],
+  exposureLog: [],
+  weeklySnapshots: [],
+  homeworkChecks: {},
+  anesthesiaContacts: 0,
+  shadowingHours: 0,
+  step3TotalQuestions: 0,
+  step3AvgScore: null,
+  narrativeReflections: [],
+  lorStatus: { pd: "not started", anesthesia: "not started", icu: "not started" },
+  profile: {
+    step2: 237,
+    step3Target: "Jan-Feb 2027",
+    currentRotation: "Pre-residency",
+    program: "Kaiser Permanente SF — IM Categorical",
+    matchGoal: "Anesthesiology 2027-2028",
+    bodyweight: null,
+    orientation: "June 15 2026",
+    firstRotation: "July 1 2026"
+  }
+};
+// ============================================================
+// END CANONICAL DATA STORE
+// ============================================================
 function exportData(){ const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='javier_os_data.json'; a.click(); }
 function clearData(){ if(confirm('Clear all data? Cannot be undone.')){ localStorage.removeItem('j_os_v4'); location.reload(); } }
 </script>
