@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Javier OS">
+<title>Javier Academic OS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg: #0d0f0e;
+  --s1: #141614;
+  --s2: #1a1d1a;
+  --s3: #212421;
+  --b:  rgba(255,255,255,0.07);
+  --b2: rgba(255,255,255,0.13);
+  --g:  #7fff6e;
+  --g2: #4fc3f7;
+  --g3: #ffb74d;
+  --g4: #ef9a9a;
+  --g5: #ce93d8;
+  --t:  #e8ede8;
+  --t2: #9aa89a;
+  --t3: #5a665a;
+  --red:#ef5350;
+  --mono: 'DM Mono', monospace;
+  --serif:'Fraunces', serif;
+  --sans: 'DM Sans', sans-serif;
+  --r:  10px;
+  --rl: 16px;
+  --nav-h: 62px;
+  --safe: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body { background: var(--bg); color: var(--t); font-family: var(--sans); font-size: 14px; line-height: 1.6; min-height: 100%; }
+
+/* ============================================================
+   DESKTOP LAYOUT (default — 769px and up)
+   ============================================================ */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* --- Header / top tabs --- */
+.header { padding: 20px 32px 0; border-bottom: 1px solid var(--b); background: var(--s1); position: sticky; top: 0; z-index: 50; }
+.htop { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+.logo { font-family: var(--serif); font-size: 22px; font-weight: 300; color: var(--g); letter-spacing: -.5px; }
+.logo span { color: var(--t2); font-style: italic; }
+.ptag { font-family: var(--mono); font-size: 10px; background: rgba(127,255,110,.1); color: var(--g); border: 1px solid rgba(127,255,110,.2); border-radius: 4px; padding: 2px 8px; letter-spacing: .06em; }
+.ptag.blue { background: rgba(79,195,247,.1); color: var(--g2); border-color: rgba(79,195,247,.2); }
+.dtag { font-family: var(--mono); font-size: 10px; color: var(--t3); margin-left: auto; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 1px; }
+.tab { font-family: var(--mono); font-size: 11px; padding: 10px 15px; color: var(--t3); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; letter-spacing: .04em; white-space: nowrap; border: none; background: none; }
+.tab:hover { color: var(--t2); }
+.tab.active { color: var(--g); border-bottom: 2px solid var(--g); }
+
+/* --- Desktop panels --- */
+.main { flex: 1; padding: 28px 32px; max-width: 1120px; width: 100%; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* --- Bottom nav: hidden on desktop --- */
+.bottom-nav { display: none; }
+
+/* ============================================================
+   SHARED COMPONENTS (both desktop & mobile)
+   ============================================================ */
+
+/* Cards */
+.card { background: var(--s1); border: 1px solid var(--b); border-radius: var(--rl); padding: 20px 22px; margin-bottom: 16px; }
+.csm  { background: var(--s2); border: 1px solid var(--b); border-radius: var(--r);  padding: 14px 16px; }
+
+/* Grid */
+.g2 { display: grid; grid-template-columns: 1fr 1fr;      gap: 14px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr;  gap: 14px; }
+.g4 { display: grid; grid-template-columns: repeat(4,1fr);gap: 12px; }
+
+/* Typography */
+.lbl   { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--t3); text-transform: uppercase; margin-bottom: 8px; }
+.stitle{ font-family: var(--serif); font-size: 20px; font-weight: 300; color: var(--t); margin-bottom: 18px; }
+.stitle span { color: var(--g); }
+
+/* Stats */
+.stat { background: var(--s2); border: 1px solid var(--b); border-radius: var(--r); padding: 14px 16px; }
+.sv   { font-family: var(--mono); font-size: 26px; font-weight: 500; color: var(--t); line-height: 1; margin-bottom: 4px; }
+.sv.g { color: var(--g); } .sv.b { color: var(--g2); } .sv.o { color: var(--g3); } .sv.r { color: var(--g4); }
+.sl   { font-size: 11px; color: var(--t3); }
+
+/* Inputs */
+input, select, textarea {
+  background: var(--s2); border: 1px solid var(--b2); border-radius: 8px;
+  color: var(--t); font-family: var(--sans); font-size: 13px;
+  padding: 9px 12px; width: 100%; outline: none; transition: border .15s;
+  -webkit-appearance: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--g); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a665a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+select option { background: var(--s2); }
+textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.ig { margin-bottom: 14px; }
+.ig label { display: block; font-size: 11px; color: var(--t2); margin-bottom: 5px; font-family: var(--mono); letter-spacing: .04em; }
+
+/* Buttons */
+.btn  { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+.bp   { background: var(--g);  color: #0a0f0a; font-weight: 500; } .bp:hover  { background: #9fff90; }
+.bs   { background: transparent; color: var(--t2); border: 1px solid var(--b2); } .bs:hover { border-color: var(--g); color: var(--g); }
+.bd   { background: transparent; color: var(--red); border: 1px solid rgba(239,83,80,.3); } .bd:hover { background: rgba(239,83,80,.1); }
+.brow { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+/* Range slider */
+input[type=range] { -webkit-appearance: none; height: 4px; background: var(--s3); border: none; border-radius: 2px; padding: 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--g); cursor: pointer; box-shadow: 0 2px 6px rgba(127,255,110,.3); }
+
+/* Badges */
+.badge { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 4px; letter-spacing: .04em; }
+.bg2  { background: rgba(127,255,110,.12); color: var(--g);  border: 1px solid rgba(127,255,110,.2); }
+.bb2  { background: rgba(79,195,247,.12);  color: var(--g2); border: 1px solid rgba(79,195,247,.2); }
+.bo2  { background: rgba(255,183,77,.12);  color: var(--g3); border: 1px solid rgba(255,183,77,.2); }
+.br2  { background: rgba(239,83,80,.12);   color: var(--g4); border: 1px solid rgba(239,83,80,.2); }
+.bgr2 { background: var(--s3); color: var(--t2); border: 1px solid var(--b); }
+
+/* Checklist */
+.ci { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--b); }
+.ci:last-child { border-bottom: none; }
+.ci input[type=checkbox] { width: 17px; height: 17px; min-width: 17px; margin-top: 2px; accent-color: var(--g); cursor: pointer; }
+.ci label { font-size: 13px; color: var(--t2); cursor: pointer; line-height: 1.4; flex: 1; }
+.ci.checked label { text-decoration: line-through; color: var(--t3); }
+
+/* Progress bars */
+.pbw { margin-bottom: 10px; }
+.pbl { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--t3); margin-bottom: 4px; }
+.pbb { height: 6px; background: var(--s3); border-radius: 3px; overflow: hidden; }
+.pbf { height: 100%; border-radius: 3px; background: var(--g); transition: width .5s; }
+
+/* Burnout bar */
+.bbar  { height: 8px; border-radius: 4px; background: var(--s3); overflow: hidden; margin: 8px 0; }
+.bfill { height: 100%; border-radius: 4px; transition: width .3s, background .3s; }
+
+/* AI response box */
+.air { background: var(--s2); border: 1px solid rgba(127,255,110,.2); border-radius: var(--r); padding: 16px 18px; margin-top: 14px; }
+.air .albl { font-family: var(--mono); font-size: 10px; color: var(--g); letter-spacing: .08em; margin-bottom: 10px; }
+.air p  { font-size: 13px; color: var(--t2); line-height: 1.7; margin-bottom: 10px; }
+.air p:last-child { margin-bottom: 0; }
+.air ul { padding-left: 18px; }
+.air li { font-size: 13px; color: var(--t2); line-height: 1.7; margin-bottom: 4px; }
+.air strong { color: var(--t); font-weight: 500; }
+
+/* Loading */
+.loading { display: flex; align-items: center; gap: 8px; color: var(--t3); font-family: var(--mono); font-size: 11px; padding: 12px 0; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--g); animation: pulse 1.2s ease-in-out infinite; }
+.dot:nth-child(2){ animation-delay: .2s; } .dot:nth-child(3){ animation-delay: .4s; }
+@keyframes pulse { 0%,80%,100%{ opacity: .2; } 40%{ opacity: 1; } }
+
+/* Log entries */
+.le { background: var(--s2); border: 1px solid var(--b); border-radius: var(--r); padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; }
+.ld { font-family: var(--mono); font-size: 10px; color: var(--t3); white-space: nowrap; min-width: 70px; margin-top: 2px; }
+.lc { flex: 1; }
+.lt { font-size: 13px; color: var(--t); margin-bottom: 2px; }
+.ldt{ font-size: 11px; color: var(--t2); }
+
+/* Week grid */
+.wk { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; padding-bottom: 4px; }
+.dc { background: var(--s2); border: 1px solid var(--b); border-radius: var(--r); padding: 12px 10px; min-height: 130px; min-width: 90px; flex: 1; }
+.dc.today { border-color: var(--g); }
+.dc.rest  { opacity: .45; }
+.dn { font-family: var(--mono); font-size: 10px; color: var(--t3); letter-spacing: .06em; margin-bottom: 6px; }
+.dd { font-size: 20px; font-weight: 500; color: var(--t); margin-bottom: 8px; }
+.dtask     { font-size: 10px; color: var(--t2); padding: 4px 6px; border-radius: 4px; margin-bottom: 4px; background: var(--s3); }
+.dtask.uw  { border-left: 2px solid var(--g); }
+.dtask.rd  { border-left: 2px solid var(--g2); }
+.dtask.rt  { border-left: 2px solid var(--g3); color: var(--g3); background: rgba(255,183,77,.08); }
+.dtask.ak  { border-left: 2px solid var(--g5); }
+
+/* Chips */
+.chip { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 5px 11px; border-radius: 20px; margin: 3px; cursor: pointer; border: 1px solid var(--b2); color: var(--t2); transition: all .15s; }
+.chip.sel { background: rgba(127,255,110,.12); color: var(--g); border-color: rgba(127,255,110,.3); }
+.chip:hover { border-color: var(--g); color: var(--g); }
+
+/* Timeline */
+.tl  { padding-left: 16px; border-left: 1px solid var(--b); }
+.tli { position: relative; padding: 0 0 18px 20px; }
+.tli::before { content: ''; position: absolute; left: -5px; top: 4px; width: 9px; height: 9px; border-radius: 50%; background: var(--s3); border: 1px solid var(--b2); }
+.tli.done::before { background: var(--g);  border-color: var(--g); }
+.tli.now::before  { background: var(--g2); border-color: var(--g2); box-shadow: 0 0 8px rgba(79,195,247,.4); }
+.tli-date   { font-family: var(--mono); font-size: 10px; color: var(--t3); margin-bottom: 3px; }
+.tli-title  { font-size: 13px; color: var(--t); margin-bottom: 2px; }
+.tli-detail { font-size: 11px; color: var(--t3); }
+
+/* Interview Q boxes */
+.qbox   { background: rgba(127,255,110,.05); border: 1px solid rgba(127,255,110,.15); border-radius: var(--r); padding: 16px; margin-bottom: 12px; }
+.qbox-q { font-family: var(--mono); font-size: 11px; color: var(--g); margin-bottom: 10px; letter-spacing: .04em; }
+.qbox-a { font-size: 13px; color: var(--t2); line-height: 1.75; }
+.qbox-a strong { color: var(--t); }
+
+/* Language transform */
+.lrow  { background: var(--s2); border: 1px solid var(--b); border-radius: var(--r); padding: 13px; margin-bottom: 8px; }
+.lbad  { font-size: 12px; color: var(--g4); margin-bottom: 5px; text-decoration: line-through; }
+.larr  { font-size: 10px; color: var(--t3); margin-bottom: 5px; font-family: var(--mono); }
+.lgood { font-size: 12px; color: var(--g2); line-height: 1.6; }
+
+/* Rotation card */
+.rcard { background: var(--s2); border: 1px solid var(--b); border-radius: var(--r); padding: 16px; margin-bottom: 10px; }
+.rcard ul { padding-left: 16px; margin-top: 8px; }
+.rcard li { font-size: 12px; color: var(--t2); margin-bottom: 5px; line-height: 1.5; }
+
+/* Rotation banner */
+.rbanner { background: linear-gradient(135deg,rgba(127,255,110,.06) 0%,rgba(79,195,247,.06) 100%); border: 1px solid rgba(127,255,110,.15); border-radius: var(--rl); padding: 18px 22px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.rname { font-family: var(--serif); font-size: 20px; font-weight: 300; color: var(--g); }
+
+/* Misc */
+.dvdr { height: 1px; background: var(--b); margin: 18px 0; }
+code  { font-family: var(--mono); font-size: 11px; background: var(--s3); padding: 2px 6px; border-radius: 4px; color: var(--t2); }
+.api-box { background: rgba(127,255,110,.04); border: 1px solid rgba(127,255,110,.15); border-radius: var(--r); padding: 16px; margin-bottom: 14px; }
+.api-box p { font-size: 13px; color: var(--t2); line-height: 1.8; margin-bottom: 8px; }
+.api-box strong { color: var(--t); }
+
+/* ============================================================
+   MOBILE OVERRIDES  (≤ 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* Hide desktop header/tabs */
+  .header { display: none; }
+
+  /* Show mobile top bar */
+  .mobile-topbar { display: flex !important; }
+
+  /* Main becomes full-height scrollable area above bottom nav */
+  .app { height: 100dvh; overflow: hidden; }
+  .main {
+    padding: 0;
+    max-width: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Panels become absolute full screens */
+  .panel {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px 16px calc(var(--nav-h) + var(--safe) + 16px);
+    display: none !important;
+  }
+  .panel.active { display: block !important; }
+
+  /* Show bottom nav */
+  .bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--s1);
+    border-top: 1px solid var(--b);
+    padding-bottom: var(--safe);
+    z-index: 100;
+    height: calc(var(--nav-h) + var(--safe));
+    overflow-x: auto;
+  }
+  .nav-item {
+    flex: 1;
+    min-width: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    cursor: pointer;
+    gap: 3px;
+    border: none;
+    background: none;
+  }
+  .nav-icon  { font-size: 18px; line-height: 1; }
+  .nav-label { font-family: var(--mono); font-size: 8px; color: var(--t3); letter-spacing: .04em; }
+  .nav-item.active .nav-label { color: var(--g); }
+
+  /* Responsive grids → single column on mobile */
+  .g2, .g3, .g4 { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Allow 2-col on mobile for small stat grids */
+  .g2.keep2 { grid-template-columns: 1fr 1fr; }
+
+  /* Cards */
+  .card  { padding: 16px; border-radius: 14px; margin-bottom: 12px; }
+  .csm   { padding: 13px 14px; }
+
+  /* Buttons full-width on mobile */
+  .btn   { width: 100%; justify-content: center; padding: 13px 18px; font-size: 12px; margin-bottom: 8px; }
+  .brow  { flex-direction: column; gap: 0; }
+  .btn-inline { width: auto; }
+
+  /* Larger touch targets for range */
+  input[type=range]::-webkit-slider-thumb { width: 22px; height: 22px; }
+
+  /* Checklist easier touch */
+  .ci { padding: 11px 0; }
+  .ci input[type=checkbox] { width: 20px; height: 20px; min-width: 20px; }
+  .ci label { font-size: 14px; }
+
+  /* Inputs larger on mobile */
+  input, select, textarea { font-size: 16px; padding: 12px 14px; border-radius: 10px; }
+
+  /* Stitle */
+  .stitle { font-size: 22px; }
+
+  /* Rotation banner stacks */
+  .rbanner { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .rbanner > div:last-child { width: 100%; }
+  .rbanner select { width: 100%; }
+
+  /* Week grid scroll on mobile */
+  .wk { flex-wrap: nowrap; }
+  .dc { min-width: 80px; flex: 0 0 80px; }
+}
+
+/* Mobile topbar — hidden on desktop */
+.mobile-topbar {
+  display: none;
+  background: var(--s1);
+  border-bottom: 1px solid var(--b);
+  padding: 12px 18px 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.mobile-logo { font-family: var(--serif); font-size: 20px; font-weight: 300; color: var(--g); letter-spacing: -.3px; }
+.mobile-logo span { color: var(--t2); font-style: italic; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- MOBILE TOP BAR (hidden on desktop) -->
+<div class="mobile-topbar">
+  <div class="mobile-logo">Javier <span>OS</span></div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <div class="ptag">PRE-RESIDENCY</div>
+    <div id="m-date" style="font-family:var(--mono);font-size:10px;color:var(--t3);"></div>
+  </div>
+</div>
+
+<!-- DESKTOP HEADER (hidden on mobile) -->
+<div class="header">
+  <div class="htop">
+    <div class="logo">Javier <span>Academic OS</span></div>
+    <div class="ptag">PRE-RESIDENCY</div>
+    <div class="ptag blue">ANESTHESIA REAPPLICATION</div>
+    <div class="dtag" id="d-date"></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="goTab('today',this)">TODAY</button>
+    <button class="tab" onclick="goTab('week',this)">THIS WEEK</button>
+    <button class="tab" onclick="goTab('uworld',this)">UWORLD</button>
+    <button class="tab" onclick="goTab('reading',this)">READING</button>
+    <button class="tab" onclick="goTab('rotations',this)">ROTATIONS</button>
+    <button class="tab" onclick="goTab('narrative',this)">NARRATIVE</button>
+    <button class="tab" onclick="goTab('interview',this)">INTERVIEW PREP</button>
+    <button class="tab" onclick="goTab('application',this)">APPLICATION</button>
+    <button class="tab" onclick="goTab('milestones',this)">MILESTONES</button>
+    <button class="tab" onclick="goTab('settings',this)">SETTINGS</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+<!-- ===== TODAY ===== -->
+<div id="panel-today" class="panel active">
+  <div class="stitle">Today's <span>operating plan</span></div>
+  <div class="rbanner">
+    <div>
+      <div class="lbl">current rotation</div>
+      <div class="rname">Pre-residency transition</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--t3);">Orientation June 15 · First rotation ~July 1</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <select id="mode-sel" style="width:175px;" onchange="modeChange()">
+        <option value="normal">NORMAL day</option>
+        <option value="call">CALL day</option>
+        <option value="postcall">POST-CALL</option>
+        <option value="recovery">RECOVERY</option>
+        <option value="rest">REST day (Sunday)</option>
+      </select>
+      <button class="btn bp btn-inline" onclick="genToday()">↻ Generate plan</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">daily check-in</div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:130px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:6px;"><span>Energy</span><span id="v-e" style="font-family:var(--mono);color:var(--g);">7/10</span></div>
+        <input type="range" min="1" max="10" value="7" id="sl-e" oninput="upB()" style="width:100%;">
+      </div>
+      <div style="flex:1;min-width:130px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:6px;"><span>Sleep</span><span id="v-s" style="font-family:var(--mono);color:var(--g2);">7h</span></div>
+        <input type="range" min="0" max="9" value="7" id="sl-s" oninput="upB()" style="width:100%;">
+      </div>
+      <div style="flex:1;min-width:130px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:6px;"><span>Motivation</span><span id="v-m" style="font-family:var(--mono);">7/10</span></div>
+        <input type="range" min="1" max="10" value="7" id="sl-m" oninput="upB()" style="width:100%;">
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:4px;"><span>Burnout risk</span><span id="b-lbl">LOW</span></div>
+      <div class="bbar"><div class="bfill" id="b-fill" style="width:20%;background:var(--g);"></div></div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="lbl">study tasks</div>
+      <div class="ci" id="ci-uw"><input type="checkbox" id="cb-uw" onchange="chk('ci-uw')"><label for="cb-uw">📚 UWorld — 15–20 questions, timed tutor. Write teaching point of every wrong answer.</label></div>
+      <div class="ci" id="ci-anki"><input type="checkbox" id="cb-anki" onchange="chk('ci-anki')"><label for="cb-anki">🃏 Anki — clear all due reviews + 5 new cards from today's encounter.</label></div>
+      <div class="ci" id="ci-read"><input type="checkbox" id="cb-read" onchange="chk('ci-read')"><label for="cb-read">📖 Reading — 10–15 min on rotation core topic (see Reading tab).</label></div>
+      <div class="ci" id="ci-oe"><input type="checkbox" id="cb-oe" onchange="chk('ci-oe')"><label for="cb-oe">🔍 OpenEvidence — 1 clinical Q from rounds, looked up same day.</label></div>
+    </div>
+    <div class="card">
+      <div class="lbl">clinical + application</div>
+      <div class="ci" id="ci-pr"><input type="checkbox" id="cb-pr" onchange="chk('ci-pr')"><label for="cb-pr">🏥 Pre-rounds — know labs, vitals, events before anyone else on team.</label></div>
+      <div class="ci" id="ci-rf"><input type="checkbox" id="cb-rf" onchange="chk('ci-rf')"><label for="cb-rf">✍️ Reflection — 2–3 sentences connecting today to perioperative thinking.</label></div>
+      <div class="ci" id="ci-wl"><input type="checkbox" id="cb-wl" onchange="chk('ci-wl')"><label for="cb-wl">🥗 Wellness — real meal, water, 10 min outside. Non-negotiable.</label></div>
+      <div class="ci" id="ci-aki"><input type="checkbox" id="cb-aki" onchange="chk('ci-aki')"><label for="cb-aki">⚠️ Email Temple AKI PI — confirm project status. HIGH PRIORITY.</label></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">ai-generated daily plan</div>
+    <div id="today-out">
+      <div class="air">
+        <div class="albl">◆ ACADEMIC COACH</div>
+        <p>Pre-residency transition — the most underused week most residents ever get. No clinical load. Use it deliberately.</p>
+        <p><strong>UWorld today: Cardiology first.</strong> Hemodynamics, HF physiology, arrhythmias, valvular disease — all map directly onto perioperative cases and anesthesia interviews.</p>
+        <p><strong>Single most important task today:</strong> Email your Temple Anesthesia PI. The perioperative AKI project is your top CV asset for anesthesia and research collaborations dissolve quietly after a move. Today, not this week.</p>
+      </div>
+    </div>
+    <div class="brow">
+      <button class="btn bs" onclick="genToday()">↻ Regenerate with AI</button>
+      <button class="btn bs btn-inline" onclick="goTab('uworld',null)">Log UWorld →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== THIS WEEK ===== -->
+<div id="panel-week" class="panel">
+  <div class="stitle">Weekly <span>schedule</span></div>
+  <div class="g2">
+    <div class="csm" style="margin-bottom:14px;">
+      <div class="ig">
+        <label>Rotation this week</label>
+        <select id="wk-rot" onchange="buildWeek()">
+          <option value="pre">Pre-residency</option><option value="gen">General medicine</option>
+          <option value="micu">MICU / ICU</option><option value="ccu">CCU</option>
+          <option value="cards">Cardiology</option><option value="neph">Nephrology</option>
+          <option value="pulm">Pulmonology</option><option value="gi">Gastroenterology</option>
+          <option value="id">Infectious Disease</option><option value="hemonc">Heme/Onc</option>
+          <option value="periop">Periop med / elective</option><option value="clinic">Outpatient</option>
+        </select>
+      </div>
+      <div class="lbl">rest days</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">
+        <span class="chip" onclick="toggleRest(this,'Sun')">SUN</span>
+        <span class="chip sel" onclick="toggleRest(this,'Sat')">SAT</span>
+        <span class="chip" onclick="toggleRest(this,'Mon')">MON</span>
+        <span class="chip" onclick="toggleRest(this,'Tue')">TUE</span>
+        <span class="chip" onclick="toggleRest(this,'Wed')">WED</span>
+        <span class="chip" onclick="toggleRest(this,'Thu')">THU</span>
+        <span class="chip" onclick="toggleRest(this,'Fri')">FRI</span>
+      </div>
+    </div>
+    <div class="csm" style="margin-bottom:14px;">
+      <div class="lbl">weekly progress</div>
+      <div class="pbw"><div class="pbl"><span>UWorld questions</span><span id="wq-v">0 / 105</span></div><div class="pbb"><div class="pbf" id="wq-b" style="width:0%;"></div></div></div>
+      <div class="pbw"><div class="pbl"><span>Articles read</span><span id="wa-v">0 / 5</span></div><div class="pbb"><div class="pbf" id="wa-b" style="width:0%;background:var(--g2);"></div></div></div>
+      <div class="dvdr" style="margin:12px 0;"></div>
+      <div class="lbl">update progress</div>
+      <div class="g2 keep2" style="gap:8px;">
+        <input type="number" id="inp-wq" placeholder="UWorld Qs" min="0" oninput="upWeekBars()">
+        <input type="number" id="inp-wa" placeholder="Articles" min="0" oninput="upWeekBars()">
+      </div>
+    </div>
+  </div>
+  <div class="wk" id="wk-grid"></div>
+  <div class="card">
+    <div class="lbl">rotation guidance</div>
+    <div id="wk-guid" class="air"><div class="albl">◆ ROTATION COACH</div><p>Select your rotation above.</p></div>
+    <div class="brow"><button class="btn bs btn-inline" onclick="genRotG()">↻ AI guidance</button></div>
+  </div>
+</div>
+
+<!-- ===== UWORLD ===== -->
+<div id="panel-uworld" class="panel">
+  <div class="stitle">UWorld <span>tracker</span></div>
+  <div class="g4 keep2" style="margin-bottom:16px;">
+    <div class="stat"><div class="sv g" id="st-total">0</div><div class="sl">Total questions</div></div>
+    <div class="stat"><div class="sv b" id="st-avg">—</div><div class="sl">Avg score %</div></div>
+    <div class="stat"><div class="sv o" id="st-streak">0</div><div class="sl">Day streak</div></div>
+    <div class="stat"><div class="sv" id="st-pct">0%</div><div class="sl">Est. complete</div></div>
+  </div>
+  <div class="card" style="margin-bottom:20px;">
+    <div class="lbl">log session</div>
+    <div class="g3" style="margin-bottom:12px;">
+      <div class="ig"><label>Date</label><input type="date" id="uw-date"></div>
+      <div class="ig"><label>Questions</label><input type="number" id="uw-q" value="15" min="1" max="120"></div>
+      <div class="ig"><label>Score %</label><input type="number" id="uw-s" placeholder="e.g. 72" min="1" max="100"></div>
+    </div>
+    <div class="g2 keep2" style="margin-bottom:12px;">
+      <div class="ig"><label>Topic</label>
+        <select id="uw-topic">
+          <option value="">Select...</option>
+          <option>Cardiology / EKG</option><option>Pulmonology / Ventilators</option>
+          <option>Nephrology / Acid-Base</option><option>Gastroenterology</option>
+          <option>Infectious Disease</option><option>Neurology</option>
+          <option>Hematology/Oncology</option><option>Endocrinology</option>
+          <option>Pharmacology / Overdose</option><option>Periop / Anesthesia / Surgery</option>
+          <option>Biostatistics / EBM</option><option>Ethics / Legal / Preventive Med</option>
+          <option>Mixed / Random</option>
+        </select>
+      </div>
+      <div class="ig"><label>Mode</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+          <span class="chip sel" onclick="selMode(this,'timed')">TIMED</span>
+          <span class="chip" onclick="selMode(this,'tutor')">TUTOR</span>
+          <span class="chip" onclick="selMode(this,'review')">REVIEW</span>
+        </div>
+      </div>
+    </div>
+    <div class="ig"><label>What were you missing? (optional)</label><textarea id="uw-notes" placeholder="e.g. Confusing Mobitz I vs II..."></textarea></div>
+    <div class="brow">
+      <button class="btn bp btn-inline" onclick="logUW()">Save session</button>
+      <button class="btn bs btn-inline" onclick="getUWRec()">↻ What topic next?</button>
+    </div>
+    <div id="uw-rec"></div>
+  </div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="lbl">domain performance</div>
+    <div id="domain-bd"><div style="font-size:12px;color:var(--t3);font-style:italic;">Log sessions to see breakdown.</div></div>
+  </div>
+  <div class="card">
+    <div class="lbl">session history</div>
+    <div id="uw-hist"><div style="font-size:12px;color:var(--t3);font-style:italic;">No sessions yet.</div></div>
+  </div>
+</div>
+
+<!-- ===== READING ===== -->
+<div id="panel-reading" class="panel">
+  <div class="stitle">Daily <span>reading</span></div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="lbl">generate reading list</div>
+    <div class="g2 keep2" style="margin-bottom:12px;">
+      <div class="ig"><label>Rotation</label>
+        <select id="rd-rot">
+          <option value="pre">Pre-residency (IM foundation)</option><option value="micu">MICU / ICU</option>
+          <option value="ccu">CCU</option><option value="cards">Cardiology</option>
+          <option value="neph">Nephrology</option><option value="pulm">Pulmonology</option>
+          <option value="gen">General IM</option><option value="periop">Perioperative medicine</option>
+        </select>
+      </div>
+      <div class="ig"><label>Focus</label>
+        <select id="rd-focus">
+          <option>Clinical reasoning & management</option>
+          <option>Perioperative relevance (anesthesia bridge)</option>
+          <option>Physiology & mechanisms</option>
+          <option>Critical care systems</option>
+          <option>Landmark trials</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn bp btn-inline" onclick="genReading()">↻ Generate with AI</button>
+  </div>
+  <div id="rd-out">
+    <div class="card">
+      <div class="lbl">pre-residency foundation (mon–fri · sat protected · sun full rest)</div>
+      <div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;"><div style="font-size:13px;font-weight:500;color:var(--t);">Perioperative Acute Kidney Injury — Risk Factors, Mechanisms, Prevention</div><div style="display:flex;gap:5px;"><span class="badge bb2">NEJM</span><span class="badge bg2">MON</span></div></div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">~25 min · Nephrology / Periop</div>
+        <div style="font-size:12px;color:var(--t2);line-height:1.5;border-left:2px solid var(--g);padding-left:10px;">Your AKI research makes this essential. Builds the longitudinal disease → acute instability narrative directly.</div>
+        <div class="brow" style="margin-top:10px;"><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="markRead(this)">Mark read</button><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="pubmed('perioperative acute kidney injury prevention 2024')">PubMed ↗</button></div>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;"><div style="font-size:13px;font-weight:500;color:var(--t);">Hemodynamic Monitoring in Critically Ill Patients — Practical Framework</div><div style="display:flex;gap:5px;"><span class="badge bo2">CHEST</span><span class="badge bg2">TUE</span></div></div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">~20 min · ICU / Hemodynamics</div>
+        <div style="font-size:12px;color:var(--t2);line-height:1.5;border-left:2px solid var(--g);padding-left:10px;">Frank-Starling, preload/afterload/contractility — the spine of ICU medicine and anesthesia. Every MICU/CCU rotation, every anesthesia interview.</div>
+        <div class="brow" style="margin-top:10px;"><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="markRead(this)">Mark read</button><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="pubmed('hemodynamic monitoring critically ill framework 2023')">PubMed ↗</button></div>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;"><div style="font-size:13px;font-weight:500;color:var(--t);">Lung-Protective Ventilation — Evidence, Driving Pressure, Clinical Application</div><div style="display:flex;gap:5px;"><span class="badge bb2">AJRCCM</span><span class="badge bg2">WED</span></div></div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">~25 min · Pulm / Ventilators</div>
+        <div style="font-size:12px;color:var(--t2);line-height:1.5;border-left:2px solid var(--g);padding-left:10px;">You will manage vented patients on MICU. Understanding driving pressure before you arrive means MICU is consolidation, not crash course. Direct anesthesia airway bridge.</div>
+        <div class="brow" style="margin-top:10px;"><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="markRead(this)">Mark read</button><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="pubmed('lung protective ventilation ARDS driving pressure 2023')">PubMed ↗</button></div>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;"><div style="font-size:13px;font-weight:500;color:var(--t);">Acid-Base Interpretation — A Systematic Five-Step Approach</div><div style="display:flex;gap:5px;"><span class="badge bgr2">Annals IM</span><span class="badge bg2">THU</span></div></div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">~20 min · Nephrology / Step 3</div>
+        <div style="font-size:12px;color:var(--t2);line-height:1.5;border-left:2px solid var(--g);padding-left:10px;">Step 3 high-yield, nephrology core, anesthesia interviewer favorite. A crisp approach makes you look sharper than 90% of interns on your first nephrology block.</div>
+        <div class="brow" style="margin-top:10px;"><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="markRead(this)">Mark read</button><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="pubmed('acid base systematic approach mixed disorders 2022')">PubMed ↗</button></div>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:14px;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;"><div style="font-size:13px;font-weight:500;color:var(--t);">Vasopressors and Inotropes in Shock — Mechanism, Selection, Dosing</div><div style="display:flex;gap:5px;"><span class="badge bo2">Crit Care</span><span class="badge bg2">FRI</span></div></div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">~20 min · ICU / Pharmacology</div>
+        <div style="font-size:12px;color:var(--t2);line-height:1.5;border-left:2px solid var(--g);padding-left:10px;">NE, epi, vasopressin, phenylephrine, push-dose epi — agents used on every ICU rotation and deployed intraoperatively by anesthesiologists. Head start on MICU and future OR experience.</div>
+        <div class="brow" style="margin-top:10px;"><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="markRead(this)">Mark read</button><button class="btn bs btn-inline" style="font-size:10px;padding:6px 12px;" onclick="pubmed('vasopressors inotropes shock mechanism selection 2023')">PubMed ↗</button></div>
+      </div>
+    </div>
+  </div>
+  <div id="rd-ai-out"></div>
+</div>
+
+<!-- ===== ROTATIONS ===== -->
+<div id="panel-rotations" class="panel">
+  <div class="stitle">Rotation <span>priorities</span></div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;" id="rot-chips">
+    <span class="chip sel" onclick="showRot(this,'micu')">MICU/ICU</span>
+    <span class="chip" onclick="showRot(this,'ccu')">CCU</span>
+    <span class="chip" onclick="showRot(this,'neph')">Nephrology</span>
+    <span class="chip" onclick="showRot(this,'pulm')">Pulmonology</span>
+    <span class="chip" onclick="showRot(this,'gen')">General IM</span>
+    <span class="chip" onclick="showRot(this,'clinic')">Outpatient</span>
+  </div>
+  <div id="rot-content"></div>
+  <div class="dvdr"></div>
+  <div class="stitle" style="font-size:16px;">What <span>impresses</span> attendings</div>
+  <div class="g2">
+    <div class="card">
+      <div class="lbl" style="color:var(--g);">DO THIS</div>
+      <div style="font-size:13px;color:var(--t2);line-height:2.0;">
+        <div>✓ Pre-round before everyone. Know labs, vitals, events first.</div>
+        <div>✓ One-liner + assessment + plan. Not a data dump.</div>
+        <div>✓ Look things up and return with answer same day — always.</div>
+        <div>✓ Anticipate: "K+ trending down — I already ordered a recheck."</div>
+        <div>✓ Own mistakes: "I missed that, here's what I'd do differently."</div>
+        <div>✓ Ask specific feedback: "One thing I should improve?"</div>
+        <div>✓ Show up to optional teaching even post-call. Noticed.</div>
+        <div>✓ Flag deteriorating patients early. Flagging is not weakness.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="lbl" style="color:var(--g4);">NEVER DO THIS</div>
+      <div style="font-size:13px;color:var(--t2);line-height:2.0;">
+        <div>✗ Come to rounds without knowing overnight events.</div>
+        <div>✗ Say "I don't know" without following up. The sin is not following up.</div>
+        <div>✗ Present facts without a plan. Reasoning, not data retrieval.</div>
+        <div>✗ Phone during rounds — even if others are.</div>
+        <div>✗ Complain about workload to attendings in first 6 months.</div>
+        <div>✗ Make the same mistake twice without showing growth.</div>
+        <div>✗ Disappear after rounds. Attendings notice who is reachable.</div>
+        <div>✗ Ask generic feedback: "How am I doing?"</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:4px;">
+    <div class="lbl">one-liner formula</div>
+    <div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:13px;font-family:var(--mono);font-size:12px;color:var(--g2);line-height:1.8;">[Age] [sex] with [key PMH] presenting with [chief complaint] found to have [dx], now HD[X], currently [trajectory].</div>
+    <div style="margin-top:10px;font-size:12px;color:var(--t2);line-height:1.6;font-style:italic;">"Ms. Rivera is a 58-year-old woman with HFrEF EF 25% and CKD3 presenting with progressive dyspnea found to have ADHF, now HD2, currently improving on IV furosemide — net 2.2L negative, creatinine stable at 1.8."</div>
+  </div>
+</div>
+
+<!-- ===== NARRATIVE ===== -->
+<div id="panel-narrative" class="panel">
+  <div class="stitle">Narrative <span>development</span></div>
+  <div class="g2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="lbl" style="color:var(--g);">themes to build</div>
+      <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--b);">
+        <div style="font-size:14px;font-weight:500;color:var(--t);margin-bottom:4px;">1. Predictive physiologic reasoning</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.6;">Trajectory recognition, deterioration-before-collapse. Tied to AKI research. <strong style="color:var(--t);">Most sophisticated theme — center the PS here.</strong></div>
+      </div>
+      <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--b);">
+        <div style="font-size:14px;font-weight:500;color:var(--t);margin-bottom:4px;">2. Longitudinal disease → acute instability</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.6;">IM taught how chronic dysfunction evolves. Anesthesia is where it becomes acutely consequential. <strong style="color:var(--t);">No one else in the pool has this framing.</strong></div>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:500;color:var(--t);margin-bottom:4px;">3. Operational systems thinking</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.6;">Khalsa redesign, LMSA infrastructure. Maps to OR systems, ICU coordination, perioperative medicine.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="lbl" style="color:var(--g4);">retire entirely</div>
+      <div style="font-size:13px;color:var(--t2);line-height:2.1;">
+        <div><span class="badge br2" style="margin-right:6px;">OUT</span>"Last line of defense"</div>
+        <div><span class="badge br2" style="margin-right:6px;">OUT</span>"Vigilant advocate while asleep"</div>
+        <div><span class="badge br2" style="margin-right:6px;">OUT</span>Opening with hardship in paragraph 1</div>
+        <div><span class="badge br2" style="margin-right:6px;">OUT</span>"Love procedures / fast-paced environment"</div>
+        <div><span class="badge br2" style="margin-right:6px;">OUT</span>Outreach/education as primary clinical identity</div>
+      </div>
+      <div class="dvdr"></div>
+      <div class="lbl" style="color:var(--g);">keep</div>
+      <div style="font-size:13px;color:var(--t2);line-height:2.1;">
+        <div><span class="badge bg2" style="margin-right:6px;">KEEP</span>Bilingualism — genuine, documented, rare</div>
+        <div><span class="badge bg2" style="margin-right:6px;">KEEP</span>Perioperative AKI research — directly relevant</div>
+        <div><span class="badge bg2" style="margin-right:6px;">KEEP</span>LMSA leadership — reframe toward operational complexity</div>
+        <div><span class="badge bg2" style="margin-right:6px;">KEEP</span>Adversity — as context, not center of gravity</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="lbl">language transformation</div>
+    <div class="lrow"><div class="lbad">"I like fast-paced environments"</div><div class="larr">→ REPLACE WITH</div><div class="lgood">"I am drawn to environments where physiologic priorities evolve dynamically and require continuous reassessment of real-time data."</div></div>
+    <div class="lrow"><div class="lbad">"I like critical care"</div><div class="larr">→ REPLACE WITH</div><div class="lgood">"I am interested in moments when chronic physiologic reserve is exhausted and small perturbations propagate into multi-system instability."</div></div>
+    <div class="lrow"><div class="lbad">"Patients depend on the anesthesiologist"</div><div class="larr">→ REPLACE WITH</div><div class="lgood">"The perioperative window represents a physiologically compressed moment where chronic disease trajectories become acutely consequential — requiring simultaneous management of interacting organ systems under time pressure."</div></div>
+    <div class="lrow"><div class="lbad">"IM gave me perspective"</div><div class="larr">→ REPLACE WITH</div><div class="lgood">"Internal medicine provided a longitudinal view of disease evolution that directly informs my perioperative thinking — I now understand not just what a patient's creatinine is, but where it has been and where it is going."</div></div>
+  </div>
+  <div class="card">
+    <div class="lbl">monthly journal — raw PS material</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.6;">When you write about a case linking IM physiology to perioperative thinking, you're simultaneously building your PS, interview answers, and letter-writer talking points.</div>
+    <div class="g2 keep2" style="margin-bottom:12px;">
+      <div class="ig"><label>Month</label><select id="jnl-month"><option>May 2026 (pre-residency)</option><option>July 2026</option><option>August 2026</option><option>September 2026</option><option>October 2026</option><option>November 2026</option><option>December 2026</option><option>January 2027</option></select></div>
+      <div class="ig"><label>Clinical case this week</label><input type="text" id="jnl-case" placeholder="e.g. HFrEF admitted pre-op..."></div>
+    </div>
+    <div class="ig"><label>Physiology — what happened, what did you miss?</label><textarea id="jnl-physio" placeholder="Write the clinical reasoning. Mechanism, what you'd do differently."></textarea></div>
+    <div class="ig"><label>Anesthesia connection (most important field)</label><textarea id="jnl-anes" placeholder="Force the connection even if subtle. This is your PS in raw form."></textarea></div>
+    <div class="ig"><label>One win this week — be specific</label><input type="text" id="jnl-win" placeholder="e.g. Caught K+ trend before rounds and repleted proactively."></div>
+    <div class="brow">
+      <button class="btn bp btn-inline" onclick="saveJnl()">Save entry</button>
+      <button class="btn bs btn-inline" onclick="genJnlPrompt()">↻ Give me a prompt</button>
+    </div>
+    <div id="jnl-ai"></div>
+    <div id="jnl-saved" style="margin-top:14px;"></div>
+  </div>
+</div>
+
+<!-- ===== INTERVIEW PREP ===== -->
+<div id="panel-interview" class="panel">
+  <div class="stitle">Interview <span>preparation</span></div>
+  <div style="font-size:13px;color:var(--t2);margin-bottom:20px;line-height:1.7;">Three questions asked at every anesthesia interview. Practice out loud until they feel natural — not rehearsed.</div>
+  <div class="qbox">
+    <div class="qbox-q">Q1 — "Why didn't you match anesthesia the first time?"</div>
+    <div class="qbox-a"><strong>"My application had real strengths — I interviewed at UCSD, Cedars-Sinai, OHSU, and UC Davis. But I had not yet demonstrated sustained clinical performance in a rigorous environment over time. I chose IM specifically because it would provide exactly that evidence: objective evaluations across complex inpatient and ICU cases. My performance in IM is my answer to that question."</strong><br><br>Key: honest, forward-looking, names the gap and closes it immediately.</div>
+  </div>
+  <div class="qbox">
+    <div class="qbox-q">Q2 — "Why anesthesia — and why now?"</div>
+    <div class="qbox-a"><strong>"Internal medicine gave me a longitudinal view of how chronic disease evolves — I now understand patients' trajectories, not just their current numbers. That training made me increasingly drawn to the perioperative window, which represents a physiologically compressed moment where those chronic trajectories become acutely consequential. Anesthesia requires real-time, simultaneous management of interacting organ systems under time pressure — the cognitive environment where I feel most engaged."</strong><br><br>Key: no vigilance, no advocacy, no last line of defense. Anesthesia = logical destination of IM reasoning.</div>
+  </div>
+  <div class="qbox">
+    <div class="qbox-q">Q3 — "What do you bring that others don't?"</div>
+    <div class="qbox-a"><strong>"Three things. First, perioperative AKI research — I'm a lead investigator on a study examining surgical AKI risk factors. I understand perioperative physiology at a research level. Second, IM-trained longitudinal physiologic reasoning — most applicants haven't managed the chronic disease progression that creates perioperative risk. I have. Third, operational leadership at scale — $140K fundraising infrastructure, workflow redesign for 300+ families — translates directly into perioperative systems thinking."</strong></div>
+  </div>
+  <div class="card">
+    <div class="lbl">practice — AI evaluation</div>
+    <div class="ig"><label>Question</label>
+      <select id="prac-q">
+        <option>Why didn't you match anesthesia the first time?</option>
+        <option>Why anesthesia — and why now?</option>
+        <option>What do you bring that others don't?</option>
+        <option>What did IM teach you?</option>
+        <option>Tell me about a clinical challenge.</option>
+        <option>Where do you see yourself in 10 years?</option>
+        <option>Walk me through your research.</option>
+      </select>
+    </div>
+    <div class="ig"><label>Your answer (aim for 90–120 seconds spoken)</label><textarea id="prac-ans" style="min-height:120px;" placeholder="Write your answer. AI will flag clichés and weak phrases."></textarea></div>
+    <div class="brow"><button class="btn bp btn-inline" onclick="evalAns()">↻ Evaluate with AI</button></div>
+    <div id="prac-out"></div>
+  </div>
+</div>
+
+<!-- ===== APPLICATION ===== -->
+<div id="panel-application" class="panel">
+  <div class="stitle">Application <span>tracker</span></div>
+  <div class="g2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="lbl">letters of recommendation</div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--b);"><div><div style="font-size:13px;color:var(--t);font-weight:500;">IM Program Director</div><div style="font-size:11px;color:var(--t3);">Kaiser SF · Ask months 9–10 · Most important</div></div><span class="badge bo2">BUILDING</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--b);"><div><div style="font-size:13px;color:var(--t);font-weight:500;">Anesthesia faculty</div><div style="font-size:11px;color:var(--t3);">Kaiser SF · After elective · Email every 6–8 wks</div></div><span class="badge br2">NOT STARTED</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--b);"><div><div style="font-size:13px;color:var(--t);font-weight:500;">ICU / senior IM attending</div><div style="font-size:11px;color:var(--t3);">After MICU or CCU · Identify at orientation</div></div><span class="badge bgr2">PENDING ICU</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;"><div><div style="font-size:13px;color:var(--t);font-weight:500;">Additional attending (optional)</div><div style="font-size:11px;color:var(--t3);">Only if relationship is genuinely strong</div></div><span class="badge bgr2">OPTIONAL</span></div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:rgba(255,183,77,.06);border:1px solid rgba(255,183,77,.15);border-radius:var(--r);font-size:12px;color:var(--g3);line-height:1.6;"><strong>Mentor cadence:</strong> Email anesthesia mentor every 6–8 weeks. Share a clinical case connecting IM to perioperative thinking. Do not go silent for months — the most common reapplicant error.</div>
+    </div>
+    <div class="card">
+      <div class="lbl">personal statement status</div>
+      <div class="ci" id="ps0"><input type="checkbox" id="pscb0" onchange="chk('ps0')"><label for="pscb0">Draft 0 — brainstorm / bullet points</label></div>
+      <div class="ci" id="ps1"><input type="checkbox" id="pscb1" onchange="chk('ps1')"><label for="pscb1">Draft 1 — first full prose draft</label></div>
+      <div class="ci" id="ps2"><input type="checkbox" id="pscb2" onchange="chk('ps2')"><label for="pscb2">Draft 2 — revised with feedback</label></div>
+      <div class="ci" id="ps3"><input type="checkbox" id="pscb3" onchange="chk('ps3')"><label for="pscb3">Draft 3 — final polish</label></div>
+      <div class="ci" id="psint"><input type="checkbox" id="pscb4" onchange="chk('psint')"><label for="pscb4">Interview answers developed (begin March 2027)</label></div>
+      <div class="dvdr"></div>
+      <div class="lbl">anesthesia exposure</div>
+      <div class="g2 keep2" style="gap:8px;margin-top:8px;margin-bottom:12px;">
+        <div class="stat"><div class="sv" id="sh-h">0</div><div class="sl">Shadowing hours</div></div>
+        <div class="stat"><div class="sv b" id="an-c">0</div><div class="sl">Contacts made</div></div>
+      </div>
+      <div class="ig"><label>Type</label><select id="exp-type"><option>Shadowing (OR)</option><option>Periop medicine elective</option><option>Mentor meeting</option><option>Grand rounds</option><option>Research meeting (AKI)</option><option>Other</option></select></div>
+      <div class="ig"><label>Notes</label><input type="text" id="exp-note" placeholder="Who, what, what you learned..."></div>
+      <button class="btn bs btn-inline" onclick="logExp()">Log event</button>
+      <div id="exp-log" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MILESTONES ===== -->
+<div id="panel-milestones" class="panel">
+  <div class="stitle">Timeline &amp; <span>milestones</span></div>
+  <div class="g2">
+    <div class="card">
+      <div class="lbl">application timeline</div>
+      <div class="tl">
+        <div class="tli done"><div class="tli-date">MAY 2026</div><div class="tli-title">Matched Kaiser SF IM</div><div class="tli-detail">System initialized.</div></div>
+        <div class="tli now"><div class="tli-date">MAY 15, 2026</div><div class="tli-title">Schedule expected today</div><div class="tli-detail">Identify ICU dates, elective blocks.</div></div>
+        <div class="tli"><div class="tli-date">JUNE 15</div><div class="tli-title">Orientation</div><div class="tli-detail">Ask about anesthesia faculty. Confirm elective options.</div></div>
+        <div class="tli"><div class="tli-date">JULY 1</div><div class="tli-title">Intern year begins</div><div class="tli-detail">Every attending = LOR in progress from day one.</div></div>
+        <div class="tli"><div class="tli-date">OCT 2026</div><div class="tli-title">Anesthesia mentor named</div><div class="tli-detail">Begin 6–8 week email cadence with clinical updates.</div></div>
+        <div class="tli"><div class="tli-date">JAN–FEB 2027</div><div class="tli-title">Step 3 — target 240+</div><div class="tli-detail">UWorld complete. CCS practiced.</div></div>
+        <div class="tli"><div class="tli-date">APR 2027</div><div class="tli-title">Personal statement Draft 0</div><div class="tli-detail">Themes crystallized from residency experience.</div></div>
+        <div class="tli"><div class="tli-date">JUN 2027</div><div class="tli-title">LOR requests sent</div><div class="tli-detail">PD, anesthesia mentor, ICU attending.</div></div>
+        <div class="tli"><div class="tli-date">SEP 2027</div><div class="tli-title">ERAS submitted</div><div class="tli-detail">Physician-level narrative. Reapplication cycle.</div></div>
+        <div class="tli"><div class="tli-date">MAR 2028</div><div class="tli-title">Match Day — Anesthesiology</div><div class="tli-detail">2027–2028 cycle.</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="lbl">open homework</div>
+        <div class="ci" id="hw1"><input type="checkbox" id="hwcb1" onchange="chk('hw1')"><label for="hwcb1">Confirm schedule — identify ICU dates and elective blocks</label></div>
+        <div class="ci" id="hw2"><input type="checkbox" id="hwcb2" onchange="chk('hw2')"><label for="hwcb2">Email Temple AKI PI — confirm project status (HIGH PRIORITY)</label></div>
+        <div class="ci" id="hw3"><input type="checkbox" id="hwcb3" onchange="chk('hw3')"><label for="hwcb3">Write first narrative reflection (10 min)</label></div>
+        <div class="ci" id="hw4"><input type="checkbox" id="hwcb4" onchange="chk('hw4')"><label for="hwcb4">Read hidden curriculum section in full</label></div>
+        <div class="ci" id="hw5"><input type="checkbox" id="hwcb5" onchange="chk('hw5')"><label for="hwcb5">Ask chief residents about anesthesia faculty at orientation</label></div>
+        <div class="ci" id="hw6"><input type="checkbox" id="hwcb6" onchange="chk('hw6')"><label for="hwcb6">Confirm if IM residents can rotate on anesthesia as elective</label></div>
+        <div class="ci" id="hw7"><input type="checkbox" id="hwcb7" onchange="chk('hw7')"><label for="hwcb7">Identify ICU attendings at Kaiser SF</label></div>
+        <div class="ci" id="hw8"><input type="checkbox" id="hwcb8" onchange="chk('hw8')"><label for="hwcb8">Name one anesthesia mentor target by October 2026</label></div>
+        <div class="ci" id="hw9"><input type="checkbox" id="hwcb9" onchange="chk('hw9')"><label for="hwcb9">Identify 2–3 IM target attending writers by month 3</label></div>
+      </div>
+      <div class="card">
+        <div class="lbl">step 3 phases</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.8;">
+          <div style="padding:9px 0;border-bottom:1px solid var(--b);"><span class="badge bg2" style="margin-right:8px;">PHASE 1</span><strong style="color:var(--t);">Jun–Dec 2026</strong><br>15–20 Qs/day. Cardiopulm, nephrology, hemodynamics. Never skip 2+ days.</div>
+          <div style="padding:9px 0;border-bottom:1px solid var(--b);"><span class="badge bb2" style="margin-right:8px;">PHASE 2</span><strong style="color:var(--t);">Jan–Jun 2027</strong><br>All systems. Daily CCS. 60%+ in all categories before scheduling.</div>
+          <div style="padding:9px 0;"><span class="badge bo2" style="margin-right:8px;">PHASE 3</span><strong style="color:var(--t);">Jul–Sep 2027</strong><br>30 Qs/day push. UWSA practice exam. Target 240+.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="panel-settings" class="panel">
+  <div class="stitle">Settings &amp; <span>API key</span></div>
+  <div class="g2">
+    <div class="card">
+      <div class="api-box">
+        <div class="lbl" style="color:var(--g);">how to set up the api key</div>
+        <p><strong>Step 1:</strong> Go to <a href="https://console.anthropic.com" style="color:var(--g2);" target="_blank">console.anthropic.com</a> → sign in or create a free account.</p>
+        <p><strong>Step 2:</strong> Click <strong>API Keys</strong> → <strong>Create Key</strong> → name it "Javier OS".</p>
+        <p><strong>Step 3:</strong> Copy the key (starts with <code>sk-ant-</code>). Do NOT paste it in chat.</p>
+        <p><strong>Step 4:</strong> Paste it in the field below and click Save. All AI buttons activate.</p>
+        <p style="color:var(--g3);"><strong>Cost:</strong> ~$0.003–0.01 per AI button press. About $1–3/month for daily use. Add $5 credit at console.anthropic.com to start.</p>
+        <p style="color:var(--g3);"><strong>Privacy:</strong> Stored only in your browser locally. Never sent anywhere except Anthropic's API directly.</p>
+      </div>
+      <div class="ig"><label>Anthropic API Key</label><input type="password" id="api-input" placeholder="sk-ant-api03-..."></div>
+      <div class="brow">
+        <button class="btn bp btn-inline" onclick="saveKey()">Save key</button>
+        <button class="btn bd btn-inline" onclick="clearKey()">Clear key</button>
+      </div>
+      <div id="key-status" style="margin-top:8px;font-size:11px;color:var(--t3);font-family:var(--mono);"></div>
+    </div>
+    <div class="card">
+      <div class="lbl">burnout rules</div>
+      <div style="font-size:13px;color:var(--t2);line-height:2.0;">
+        <div>01 — Sunday is protected. No UWorld. No AMBOSS.</div>
+        <div>02 — Sleep before studying, always.</div>
+        <div>03 — Bad weeks are data, not failure. Don't double next week.</div>
+        <div>04 — 18–24 month long game. Sustainable beats intense.</div>
+        <div>05 — Commit fully to IM. Excellent IM IS your anesthesia application.</div>
+        <div>06 — Eat real food, move, protect one relationship.</div>
+        <div>07 — Return to the journal when you lose the thread.</div>
+        <div>08 — Get support if you need it. Kaiser SF has wellness resources.</div>
+      </div>
+      <div class="dvdr"></div>
+      <div class="lbl">data</div>
+      <div class="brow">
+        <button class="btn bs btn-inline" onclick="exportData()">Export data (JSON)</button>
+        <button class="btn bd btn-inline" onclick="clearData()">Clear all data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="goMobile('today',this)"><span class="nav-icon">🌅</span><span class="nav-label">TODAY</span></button>
+  <button class="nav-item" onclick="goMobile('week',this)"><span class="nav-icon">📅</span><span class="nav-label">WEEK</span></button>
+  <button class="nav-item" onclick="goMobile('uworld',this)"><span class="nav-icon">📚</span><span class="nav-label">UWORLD</span></button>
+  <button class="nav-item" onclick="goMobile('reading',this)"><span class="nav-icon">📖</span><span class="nav-label">READING</span></button>
+  <button class="nav-item" onclick="goMobile('rotations',this)"><span class="nav-icon">🏥</span><span class="nav-label">ROTATIONS</span></button>
+  <button class="nav-item" onclick="goMobile('narrative',this)"><span class="nav-icon">✍️</span><span class="nav-label">NARRATIVE</span></button>
+  <button class="nav-item" onclick="goMobile('interview',this)"><span class="nav-icon">🎤</span><span class="nav-label">INTERVIEW</span></button>
+  <button class="nav-item" onclick="goMobile('milestones',this)"><span class="nav-icon">🎯</span><span class="nav-label">TASKS</span></button>
+  <button class="nav-item" onclick="goMobile('settings',this)"><span class="nav-icon">⚙️</span><span class="nav-label">SETTINGS</span></button>
+</nav>
+
+</div><!-- end app -->
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+let S = { sessions:[], journals:[], exposure:[], checks:{}, apiKey:'', uwMode:'timed', restDays:['Sat'], rotation:'pre' };
+function load(){ try{ const d=localStorage.getItem('j_os_v4'); if(d) Object.assign(S,JSON.parse(d)); }catch(e){} }
+function save(){ try{ localStorage.setItem('j_os_v4',JSON.stringify(S)); }catch(e){} }
+load();
+
+/* ============================================================
+   INIT
+   ============================================================ */
+const now = new Date();
+const dateStr = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+const dateShort = now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+if(document.getElementById('d-date')) document.getElementById('d-date').textContent = dateStr;
+if(document.getElementById('m-date')) document.getElementById('m-date').textContent = dateShort;
+const di = document.getElementById('uw-date'); if(di) di.value = now.toISOString().split('T')[0];
+if(S.apiKey){ document.getElementById('api-input').value = S.apiKey; document.getElementById('key-status').textContent = '✓ Key loaded'; }
+try{ restoreChecks(); }catch(e){}
+try{ renderStats(); }catch(e){}
+try{ renderHist(); }catch(e){}
+try{ buildWeek(); }catch(e){}
+try{ showRot(null,'micu'); }catch(e){}
+
+/* ============================================================
+   NAVIGATION — works for both desktop tabs and mobile bottom nav
+   ============================================================ */
+function goTab(name, el){
+  try{
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    const panel = document.getElementById('panel-'+name);
+    if(panel) panel.classList.add('active');
+    if(el) el.classList.add('active');
+  }catch(e){ console.error(e); }
+}
+function goMobile(name, el){
+  try{
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const panel = document.getElementById('panel-'+name);
+    if(panel) panel.classList.add('active');
+    if(el) el.classList.add('active');
+    // Scroll to top of panel
+    if(panel) panel.scrollTop = 0;
+  }catch(e){ console.error(e); }
+}
+
+/* ============================================================
+   BURNOUT METER
+   ============================================================ */
+function upB(){
+  const e=+document.getElementById('sl-e').value;
+  const s=+document.getElementById('sl-s').value;
+  const m=document.getElementById('sl-m') ? +document.getElementById('sl-m').value : e;
+  document.getElementById('v-e').textContent = e+'/10';
+  document.getElementById('v-s').textContent = s+'h';
+  if(document.getElementById('v-m')) document.getElementById('v-m').textContent = m+'/10';
+  const risk = Math.max(0,Math.min(100, Math.round((10-((e+(s/9*10)+m)/3))*10)));
+  document.getElementById('b-fill').style.width = risk+'%';
+  const c = risk<25?'var(--g)':risk<50?'var(--g3)':risk<75?'var(--g4)':'var(--red)';
+  const l = risk<25?'LOW':risk<50?'MODERATE':risk<75?'HIGH':'CRITICAL';
+  document.getElementById('b-fill').style.background = c;
+  document.getElementById('b-lbl').textContent = l;
+  document.getElementById('b-lbl').style.color = c;
+}
+
+/* ============================================================
+   MODE
+   ============================================================ */
+function modeChange(){
+  const m = document.getElementById('mode-sel').value;
+  const msgs = {
+    normal:   '<p><strong>Normal mode:</strong> Full session — 15–20 UWorld timed tutor, Anki, reading, reflection, OpenEvidence lookup.</p>',
+    call:     '<p><strong>Call day:</strong> 10 UWorld minimum. No reading required. Podcast on commute counts. Protect your energy — evaluations are your application.</p>',
+    postcall: '<p><strong>Post-call:</strong> Zero questions required. Sleep before studying, always. Light Anki only if rested. No new content.</p>',
+    recovery: '<p><strong>Recovery:</strong> Podcast only. No new content. Bad weeks are data, not failure. Continuity beats volume.</p>',
+    rest:     '<p><strong>Rest day (Sunday protected):</strong> No UWorld. No AMBOSS. Anki only if light. Social recharge — protect this. Your brain consolidates during rest.</p>'
+  };
+  document.getElementById('today-out').innerHTML = '<div class="air"><div class="albl">◆ MODE OVERRIDE</div>'+msgs[m]+'</div>';
+}
+function selMode(el,v){
+  el.closest('div').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel'); S.uwMode=v; save();
+}
+
+/* ============================================================
+   CHECKBOXES
+   ============================================================ */
+function chk(id){
+  const el=document.getElementById(id); if(!el) return;
+  const cb=el.querySelector('input[type=checkbox]');
+  if(cb.checked) el.classList.add('checked'); else el.classList.remove('checked');
+  S.checks[id]=cb.checked; save();
+}
+function restoreChecks(){
+  for(const [id,val] of Object.entries(S.checks)){
+    const el=document.getElementById(id); if(!el) continue;
+    const cb=el.querySelector('input[type=checkbox]'); if(!cb) continue;
+    cb.checked=val; if(val) el.classList.add('checked'); else el.classList.remove('checked');
+  }
+}
+
+/* ============================================================
+   WEEK VIEW
+   ============================================================ */
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const rotData = {
+  pre:   { uw:'Cardiology → Pulm → Nephrology', rd:'Hemodynamics, ventilators, acid-base, vasopressors', ak:'AnKing IM core — build the daily habit', ex:'Email Temple PI today. Read hidden curriculum.' },
+  gen:   { uw:'IM core: Cardiology, Nephrology, GI', rd:'Clinical reasoning & management', ak:'5 new cards from today\'s admissions', ex:'Physiologic reasoning language out loud on rounds.' },
+  micu:  { uw:'Pulm + Nephrology + Shock physiology', rd:'Critical care: vents, vasopressors, hemodynamics', ak:'Vasopressor pharmacology — mechanisms', ex:'Ask to observe intubations and line placement.' },
+  ccu:   { uw:'Cardiology heavy — HF, ACS, arrhythmias', rd:'Hemodynamics, echo, cardiac physiology', ak:'EKG pattern recognition deck', ex:'Read every EKG before the attending.' },
+  cards: { uw:'Cardiology all blocks — EKG mastery', rd:'Landmark cardiac trials', ak:'Frank-Starling, valve physiology', ex:'Ask to observe TTE/TEE.' },
+  neph:  { uw:'Nephrology + acid-base (your research)', rd:'AKI, CKD, perioperative renal protection', ak:'5-step acid-base approach', ex:'Connect every AKI case to your research. Be the expert.' },
+  pulm:  { uw:'Pulm + critical care — ARDS, PE', rd:'Lung-protective ventilation, driving pressure', ak:'Ventilator modes, PEEP-FiO2', ex:'Interpret every ABG before the attending.' },
+  gi:    { uw:'GI + hepatology', rd:'GI bleeding, coagulopathy, liver disease', ak:'GI bleeding algorithm', ex:'Coagulopathy → direct anesthesia relevance.' },
+  id:    { uw:'ID + micro — sepsis, antimicrobials', rd:'Sepsis management, source control', ak:'Antibiotic spectra by organism', ex:'Sepsis physiology maps to periop hemodynamics.' },
+  hemonc:{ uw:'Heme/Onc — coagulopathy, transfusion', rd:'Transfusion medicine, coagulopathy', ak:'Transfusion thresholds', ex:'Transfusion = direct anesthesia periop relevance.' },
+  periop:{ uw:'Surgery / Anesthesia / Periop blocks', rd:'Periop medicine — anesthesia bridge', ak:'Periop risk stratification tools', ex:'Shadow in OR this week if possible.' },
+  clinic:{ uw:'Mixed — outpatient, preventive medicine', rd:'Chronic disease and periop risk accumulation', ak:'Preventive screening guidelines (Step 3)', ex:'Lighter days = deeper UWorld + AMBOSS reading.' }
+};
+function buildWeek(){
+  const rot = document.getElementById('wk-rot').value; S.rotation = rot;
+  const rd = rotData[rot] || rotData.gen;
+  const today = new Date(), dow = today.getDay();
+  const grid = document.getElementById('wk-grid'); grid.innerHTML = '';
+  for(let i=0;i<7;i++){
+    const d = new Date(today); d.setDate(today.getDate()-dow+i);
+    const dn = DAYS[i], isToday = i===dow, isRest = S.restDays.includes(dn);
+    const col = document.createElement('div');
+    col.className = 'dc'+(isToday?' today':'')+(isRest?' rest':'');
+    let inner = `<div class="dn">${dn.toUpperCase()}</div><div class="dd">${d.getDate()}</div>`;
+    if(isRest){
+      inner += `<div class="dtask rt">REST</div><div class="dtask" style="font-size:10px;color:var(--t3);">Anki if light</div>`;
+    } else {
+      inner += `<div class="dtask uw">${rd.uw.split('→')[0].trim().substring(0,18)}</div>`;
+      inner += `<div class="dtask rd">${rd.rd.substring(0,18)}…</div>`;
+      inner += `<div class="dtask ak">${rd.ak.substring(0,18)}…</div>`;
+    }
+    col.innerHTML = inner; grid.appendChild(col);
+  }
+  const el = document.getElementById('wk-guid');
+  el.innerHTML = `<div class="albl">◆ ROTATION COACH — ${rot.toUpperCase()}</div>
+  <p><strong>UWorld this week:</strong> ${rd.uw}. Do in this order — builds conceptually and aligns with clinical exposure.</p>
+  <p><strong>Reading:</strong> ${rd.rd}. One article per clinical day. Saturday protected. Sunday full rest.</p>
+  <p><strong>Anki:</strong> ${rd.ak}.</p>
+  <p><strong>Priority:</strong> ${rd.ex}</p>
+  <p><strong>Anesthesia bridge:</strong> Ask yourself daily — how does what I'm learning today affect a patient going to the OR next week?</p>`;
+  save();
+}
+function toggleRest(el, day){
+  el.classList.toggle('sel');
+  if(S.restDays.includes(day)) S.restDays = S.restDays.filter(d=>d!==day);
+  else S.restDays.push(day);
+  save(); buildWeek();
+}
+function upWeekBars(){
+  const q=+document.getElementById('inp-wq').value||0, a=+document.getElementById('inp-wa').value||0;
+  document.getElementById('wq-v').textContent = q+' / 105';
+  document.getElementById('wq-b').style.width = Math.min(100,Math.round(q/105*100))+'%';
+  document.getElementById('wa-v').textContent = a+' / 5';
+  document.getElementById('wa-b').style.width = Math.min(100,Math.round(a/5*100))+'%';
+}
+
+/* ============================================================
+   ROTATION CONTENT
+   ============================================================ */
+const rotInfo = {
+  micu:  { title:'MICU / ICU', tag:'Highest priority', badge:'bg2', items:['Ventilator modes, PEEP, driving pressure, lung protection — know cold','Vasopressor pharmacology: NE, epi, vasopressin, phenylephrine, push-dose epi — mechanisms and dosing','Shock: MAP targets, fluid responsiveness, ScvO2, lactate — interpret mechanistically','Sedation: RASS, propofol, dexmedetomidine — anesthesia overlap territory','For every case: "how would periop risk look going to the OR?"','Ask to observe/participate in intubations, central lines, bronchoscopy'] },
+  ccu:   { title:'CCU / Cardiology', tag:'Cardiac anesthesia foundation', badge:'bb2', items:['Read every EKG yourself before the attending. Build speed and pattern recognition daily.','HFrEF vs HFpEF: congestion vs perfusion, diuresis targets, GDMT cold','ACS: STEMI vs NSTEMI, cath timing, antiplatelet risk perioperatively','Valvular disease: which lesions carry highest periop risk and exactly why','Echo: learn to interpret reports, ask to observe TTE/TEE if possible'] },
+  neph:  { title:'Nephrology', tag:'Your research area — be the expert', badge:'bgr2', items:['AKI: prerenal vs intrinsic vs postrenal — mechanistic differentiation every time','Periop AKI — your publication makes you the room expert. Use it explicitly.','Electrolytes: K+, Na+, Ca2+, Mg2+ — all are anesthesia emergencies intraoperatively','Acid-base: 5-step approach, mixed disorders, compensation rules cold','Connect every AKI case to surgical risk in your clinical notes'] },
+  pulm:  { title:'Pulmonology', tag:'Ventilator mastery', badge:'bo2', items:['ARDS: Berlin criteria, prone positioning, lung-protective ventilation — know the evidence','COPD/asthma: NIV vs intubation thresholds','Interpret every ABG before the attending. Build speed until automatic.','PFTs: obstructive vs restrictive, with full clinical context','PE: risk stratify, anticoagulation vs thrombolytics vs catheter-directed'] },
+  gen:   { title:'General medicine', tag:'Evaluation foundation', badge:'bgr2', items:['Pre-round before everyone. Know labs, vitals, overnight events cold.','Present with one-liner + assessment + plan every time — not a data dump.','Anticipate next steps: "K+ trending down — I already ordered a recheck for 4pm"','Make sure every attending knows your name and goals by week 2.','Ask specific feedback at end of rotation: "One thing I should improve?"'] },
+  clinic:{ title:'Outpatient / continuity', tag:'Longitudinal thinking', badge:'bgr2', items:['DM, HTN, HLD: how chronic disease accumulates periop risk — be specific.','Preop clearance: what does surgery need from IM? Practice framing this.','Preventive medicine screening guidelines — Step 3 tests these every time.','Use lighter days for deeper UWorld + AMBOSS physiology reading.','Polypharmacy and drug interactions — pharmacology depth for Step 3 and anesthesia.'] }
+};
+function showRot(el, key){
+  if(el){ document.querySelectorAll('#rot-chips .chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+  const d = rotInfo[key]; if(!d) return;
+  document.getElementById('rot-content').innerHTML =
+    `<div class="rcard"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span class="badge ${d.badge}">${d.tag}</span></div><div style="font-size:15px;font-weight:500;color:var(--t);margin-bottom:8px;">${d.title}</div><ul>${d.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+}
+
+/* ============================================================
+   UWORLD LOG
+   ============================================================ */
+function logUW(){
+  const date=document.getElementById('uw-date').value;
+  const q=+document.getElementById('uw-q').value||0;
+  const sc=+document.getElementById('uw-s').value||null;
+  const topic=document.getElementById('uw-topic').value;
+  const notes=document.getElementById('uw-notes').value;
+  if(!date||!q||!topic){ alert('Fill in date, questions, and topic.'); return; }
+  S.sessions.push({date,q,score:sc,topic,notes,mode:S.uwMode,ts:Date.now()});
+  save(); renderStats(); renderHist();
+  document.getElementById('uw-q').value='15';
+  document.getElementById('uw-s').value='';
+  document.getElementById('uw-notes').value='';
+}
+function renderStats(){
+  const ss=S.sessions;
+  const total=ss.reduce((a,s)=>a+s.q,0);
+  const scores=ss.filter(s=>s.score).map(s=>s.score);
+  const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b)/scores.length):null;
+  const pct=Math.min(100,Math.round(total/3500*100));
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-avg').textContent=avg?avg+'%':'—';
+  document.getElementById('st-pct').textContent=pct+'%';
+  // Streak
+  let streak=0;
+  if(ss.length){
+    const dates=[...new Set(ss.map(s=>s.date))].sort().reverse();
+    let cur=new Date();
+    for(const d of dates){
+      if(d===cur.toISOString().split('T')[0]){ streak++; cur.setDate(cur.getDate()-1); }
+      else break;
+    }
+  }
+  document.getElementById('st-streak').textContent=streak;
+  // Domain breakdown
+  const el=document.getElementById('domain-bd');
+  const dm={};
+  ss.forEach(s=>{ if(!dm[s.topic])dm[s.topic]={q:0,scores:[]}; dm[s.topic].q+=s.q; if(s.score)dm[s.topic].scores.push(s.score); });
+  if(!Object.keys(dm).length){ el.innerHTML='<div style="font-size:12px;color:var(--t3);font-style:italic;">Log sessions to see breakdown.</div>'; return; }
+  el.innerHTML=Object.entries(dm).map(([t,d])=>{
+    const avg=d.scores.length?Math.round(d.scores.reduce((a,b)=>a+b)/d.scores.length):null;
+    const pct=avg||50;
+    return `<div class="pbw"><div class="pbl"><span>${t}</span><span>${d.q}q${avg?' · '+avg+'%':''}</span></div><div class="pbb"><div class="pbf" style="width:${pct}%;background:${pct>=70?'var(--g)':pct>=55?'var(--g3)':'var(--g4)'};"></div></div></div>`;
+  }).join('');
+}
+function renderHist(){
+  const el=document.getElementById('uw-hist');
+  const ss=[...S.sessions].reverse().slice(0,15);
+  if(!ss.length){ el.innerHTML='<div style="font-size:12px;color:var(--t3);font-style:italic;">No sessions yet.</div>'; return; }
+  el.innerHTML=ss.map(s=>`<div class="le"><div class="ld">${s.date}</div><div class="lc"><div class="lt">${s.q}q · ${s.topic} · ${s.mode}${s.score?` · <span style="color:var(--g);">${s.score}%</span>`:''}</div>${s.notes?`<div class="ldt">${s.notes}</div>`:''}</div></div>`).join('');
+}
+
+/* ============================================================
+   READING
+   ============================================================ */
+function markRead(btn){ const c=btn.closest('div[style]'); c.style.opacity='.35'; btn.textContent='✓ Read'; btn.disabled=true; }
+function pubmed(q){ window.open('https://pubmed.ncbi.nlm.nih.gov/?term='+encodeURIComponent(q),'_blank'); }
+
+/* ============================================================
+   EXPOSURE LOG
+   ============================================================ */
+function logExp(){
+  const type=document.getElementById('exp-type').value;
+  const note=document.getElementById('exp-note').value;
+  const date=new Date().toISOString().split('T')[0];
+  S.exposure.push({type,note,date,ts:Date.now()}); save();
+  document.getElementById('sh-h').textContent=S.exposure.filter(e=>e.type.includes('Shadow')||e.type.includes('OR')).length;
+  document.getElementById('an-c').textContent=S.exposure.filter(e=>e.type.includes('Mentor')||e.type.includes('meeting')).length;
+  document.getElementById('exp-log').innerHTML=S.exposure.slice(-5).reverse().map(e=>`<div class="le"><div class="ld">${e.date}</div><div class="lc"><div class="lt">${e.type}</div><div class="ldt">${e.note}</div></div></div>`).join('');
+  document.getElementById('exp-note').value='';
+}
+
+/* ============================================================
+   JOURNAL
+   ============================================================ */
+function saveJnl(){
+  const month=document.getElementById('jnl-month').value;
+  const c=document.getElementById('jnl-case').value;
+  const p=document.getElementById('jnl-physio').value;
+  const a=document.getElementById('jnl-anes').value;
+  const w=document.getElementById('jnl-win').value;
+  if(!p){ alert('Write something in the physiology field first.'); return; }
+  S.journals.push({month,case:c,physio:p,anes:a,win:w,ts:Date.now()});
+  save();
+  ['jnl-physio','jnl-anes','jnl-case','jnl-win'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('jnl-saved').innerHTML=S.journals.slice(-3).reverse().map(j=>`<div class="le"><div class="ld">${j.month}</div><div class="lc"><div class="lt">${j.case||'No case noted'}</div><div class="ldt">${j.physio.substring(0,120)}…</div></div></div>`).join('');
+}
+
+/* ============================================================
+   API / AI
+   ============================================================ */
+function saveKey(){ S.apiKey=document.getElementById('api-input').value.trim(); save(); document.getElementById('key-status').textContent=S.apiKey?'✓ Key saved — all AI buttons now active':'No key entered'; }
+function clearKey(){ S.apiKey=''; document.getElementById('api-input').value=''; document.getElementById('key-status').textContent='Key cleared'; save(); }
+function loading(id){ document.getElementById(id).innerHTML='<div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>Generating…</span></div>'; }
+async function claude(prompt){
+  if(!S.apiKey) return null;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:`You are Javier Montelongo's academic coach. PGY-1 IM at Kaiser SF pursuing anesthesia reapplication 2027-2028. Step 2 CK 237. Build themes: predictive physiologic reasoning, longitudinal disease to acute instability, operational systems thinking. Retire: vigilance, last line of defense, love procedures, fast-paced. Be specific, physician-level, non-generic. 200 words max. Plain prose only.`,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const d=await r.json();
+    return d.content?.[0]?.text||null;
+  }catch(e){ console.error(e); return null; }
+}
+function fmt(t,id){
+  document.getElementById(id).innerHTML = t
+    ? `<div class="air"><div class="albl">◆ AI COACH</div><p>${t.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</p></div>`
+    : `<div class="air"><div class="albl">◆ ERROR</div><p>Could not reach API. Check your key in Settings.</p></div>`;
+}
+async function genToday(){
+  const mode=document.getElementById('mode-sel').value;
+  const e=document.getElementById('sl-e').value;
+  const s=document.getElementById('sl-s').value;
+  if(!S.apiKey){ document.getElementById('today-out').innerHTML='<div class="air"><div class="albl">◆ NOTE</div><p>Add your Anthropic API key in the Settings tab — full instructions are there. Takes 2 minutes.</p></div>'; return; }
+  loading('today-out');
+  fmt(await claude(`Daily plan for Javier. Mode: ${mode}. Energy: ${e}/10. Sleep: ${s}h. Rotation: ${S.rotation}. Give: specific UWorld topic recommendation with rationale tied to anesthesia goal, whether to read today and what, one non-study priority task. Be specific about WHY each connects to anesthesia reapplication.`),'today-out');
+}
+async function genRotG(){
+  const rot=document.getElementById('wk-rot').value;
+  if(!S.apiKey) return;
+  loading('wk-guid');
+  const t=await claude(`Weekly guidance for Javier on ${rot} rotation. UWorld topic order with rationale, clinical focus to maximize evaluations and LOR potential, one hidden curriculum priority, how this rotation builds the anesthesia reapplication narrative.`);
+  document.getElementById('wk-guid').innerHTML=t?`<div class="albl">◆ AI ROTATION COACH</div><p>${t.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</p>`:'<p>Could not generate. Check API key.</p>';
+}
+async function getUWRec(){
+  const dm={};
+  S.sessions.forEach(s=>{ if(!dm[s.topic])dm[s.topic]={q:0,scores:[]}; dm[s.topic].q+=s.q; if(s.score)dm[s.topic].scores.push(s.score); });
+  const sum=Object.entries(dm).map(([t,d])=>`${t}: ${d.q}q avg ${d.scores.length?Math.round(d.scores.reduce((a,b)=>a+b)/d.scores.length)+'%':'no score'}`).join('; ')||'No sessions logged';
+  if(!S.apiKey){ document.getElementById('uw-rec').innerHTML='<div class="air" style="margin-top:12px;"><div class="albl">◆ NOTE</div><p>Add API key in Settings for AI recommendations.</p></div>'; return; }
+  loading('uw-rec');
+  fmt(await claude(`UWorld history: ${sum}. Rotation: ${S.rotation}. Recommend next topic, mode (timed vs tutor), and why it matters for Step 3 AND anesthesia reapplication.`),'uw-rec');
+}
+async function genReading(){
+  const rot=document.getElementById('rd-rot').value;
+  const focus=document.getElementById('rd-focus').value;
+  if(!S.apiKey){ document.getElementById('rd-ai-out').innerHTML='<div class="air" style="margin-top:12px;"><div class="albl">◆ NOTE</div><p>Add API key in Settings. Pre-built pre-residency list shown above.</p></div>'; return; }
+  loading('rd-ai-out');
+  const t=await claude(`5-article weekly reading list for Javier. Rotation: ${rot}. Focus: ${focus}. For each: real article title and journal, why it matters for IM training, why it bridges to anesthesia/perioperative medicine. Numbered list, specific.`);
+  document.getElementById('rd-ai-out').innerHTML=t?`<div class="card" style="margin-top:12px;"><div class="lbl">ai-generated — ${rot}</div><div class="air"><div class="albl">◆ READING LIST</div><p>${t.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</p></div></div>`:'';
+}
+async function genJnlPrompt(){
+  if(!S.apiKey){ document.getElementById('jnl-ai').innerHTML='<div class="air" style="margin-top:12px;"><div class="albl">◆ PROMPT</div><p>Describe a moment this month when you recognized a physiologic pattern before the rest of your team. What did you notice? What did you do? How does this connect to what an anesthesiologist would need to anticipate before the OR?</p></div>'; return; }
+  loading('jnl-ai');
+  fmt(await claude(`Give Javier a specific narrative reflection prompt. Rotation: ${S.rotation}. Help him surface a clinical moment connecting to predictive physiologic reasoning, dynamic systems, or longitudinal disease to acute instability. One thought-provoking paragraph.`),'jnl-ai');
+}
+async function evalAns(){
+  const q=document.getElementById('prac-q').value;
+  const a=document.getElementById('prac-ans').value;
+  if(!a){ alert('Write your answer first.'); return; }
+  if(!S.apiKey){ document.getElementById('prac-out').innerHTML='<div class="air" style="margin-top:12px;"><div class="albl">◆ NOTE</div><p>Add API key in Settings to enable interview evaluation.</p></div>'; return; }
+  loading('prac-out');
+  fmt(await claude(`Evaluate Javier's anesthesia reapplication interview answer. Question: "${q}". Answer: "${a}". Give: (1) what works and why, (2) what to strengthen or remove — flag clichés like vigilance/last line of defense, (3) one specific rewrite of the weakest sentence. Be direct.`),'prac-out');
+}
+
+/* ============================================================
+   DATA
+   ============================================================ */
+function exportData(){ const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='javier_os_data.json'; a.click(); }
+function clearData(){ if(confirm('Clear all data? Cannot be undone.')){ localStorage.removeItem('j_os_v4'); location.reload(); } }
+</script>
+</body>
+</html>
