@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -846,7 +847,7 @@ code  { font-family: var(--mono); font-size: 11px; background: var(--s3); paddin
 <!-- ===== SETTINGS ===== -->
 <div id="panel-settings" class="panel">
   <div class="stitle">Settings &amp; <span>API key</span></div>
-  <div class="g2">
+  <div class="g2" style="grid-template-columns:1fr 1fr;display:grid;gap:14px;flex-wrap:wrap;">
     <div class="card">
       <div class="api-box">
         <div class="lbl" style="color:var(--g);">how to set up the api key</div>
@@ -864,6 +865,39 @@ code  { font-family: var(--mono); font-size: 11px; background: var(--s3); paddin
       </div>
       <div id="key-status" style="margin-top:8px;font-size:11px;color:var(--t3);font-family:var(--mono);"></div>
     </div>
+
+    <!-- SYNC CARD -->
+    <div class="card" style="grid-column:1/-1;">
+      <div class="lbl" style="color:var(--g2);">cross-device sync</div>
+      <div style="background:rgba(79,195,247,.05);border:1px solid rgba(79,195,247,.15);border-radius:var(--r);padding:16px;margin-bottom:14px;">
+        <div style="font-size:13px;color:var(--t2);line-height:1.85;">
+          <p style="margin-bottom:10px;">This syncs your UWorld sessions, journal entries, checkboxes, and exposure log between your Mac and iPhone automatically. Uses <strong style="color:var(--t);">JSONBin</strong> — free, no account needed on your end beyond a free API key.</p>
+          <p><strong style="color:var(--t);">First time setup (do this once on your Mac):</strong></p>
+          <p>1. Go to <a href="https://jsonbin.io" target="_blank" style="color:var(--g2);">jsonbin.io</a> → Sign up free → Go to API Keys → copy your <strong style="color:var(--t);">Master Key</strong>.</p>
+          <p>2. Paste your Master Key below → click <strong style="color:var(--t);">Create Sync Bin</strong>. This creates your personal cloud storage and gives you a <strong style="color:var(--t);">Sync ID</strong>.</p>
+          <p>3. Copy that Sync ID. On your iPhone, open this app → Settings → paste both your Master Key and Sync ID → tap <strong style="color:var(--t);">Save Settings</strong> → tap <strong style="color:var(--t);">Pull from cloud</strong>.</p>
+          <p style="margin-top:8px;color:var(--g3);">After setup: every time you log a UWorld session or save a journal entry, it automatically pushes to the cloud. On your other device, tap Pull to get the latest data.</p>
+        </div>
+      </div>
+      <div class="g2 keep2" style="margin-bottom:12px;">
+        <div class="ig"><label>JSONBin Master Key</label><input type="password" id="sync-key-input" placeholder="$2a$10$..."></div>
+        <div class="ig">
+          <label>Sync ID (auto-filled after creating)</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="sync-id-input" placeholder="Will appear here after creation" style="flex:1;">
+            <button class="btn bs btn-inline" onclick="copySyncId()" style="white-space:nowrap;">Copy</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn bp btn-inline" onclick="createBin()">Create Sync Bin (first time)</button>
+        <button class="btn bs btn-inline" onclick="saveSyncSettings()">Save Settings (existing ID)</button>
+        <button class="btn bs btn-inline" onclick="cloudPull()">↓ Pull from cloud</button>
+        <button class="btn bs btn-inline" onclick="cloudPush()">↑ Push to cloud</button>
+      </div>
+      <div id="sync-status" style="margin-top:10px;font-size:11px;color:var(--t3);font-family:var(--mono);min-height:16px;"></div>
+    </div>
+
     <div class="card">
       <div class="lbl">burnout rules</div>
       <div style="font-size:13px;color:var(--t2);line-height:2.0;">
@@ -907,9 +941,95 @@ code  { font-family: var(--mono); font-size: 11px; background: var(--s3); paddin
 /* ============================================================
    STATE
    ============================================================ */
-let S = { sessions:[], journals:[], exposure:[], checks:{}, apiKey:'', uwMode:'timed', restDays:['Sat'], rotation:'pre' };
-function load(){ try{ const d=localStorage.getItem('j_os_v4'); if(d) Object.assign(S,JSON.parse(d)); }catch(e){} }
-function save(){ try{ localStorage.setItem('j_os_v4',JSON.stringify(S)); }catch(e){} }
+let S = { sessions:[], journals:[], exposure:[], checks:{}, apiKey:'', uwMode:'timed', restDays:['Sat'], rotation:'pre', syncBinId:'', syncApiKey:'' };
+
+/* ---- LOCAL STORAGE ---- */
+function load(){
+  try{ const d=localStorage.getItem('j_os_v4'); if(d) Object.assign(S,JSON.parse(d)); }catch(e){}
+}
+function save(){
+  try{
+    localStorage.setItem('j_os_v4', JSON.stringify(S));
+    if(S.syncBinId && S.syncApiKey) cloudPush().catch(()=>{});
+  }catch(e){}
+}
+
+/* ---- CLOUD SYNC (JSONBin) ---- */
+const JBIN = 'https://api.jsonbin.io/v3/b';
+
+async function cloudPush(){
+  if(!S.syncBinId||!S.syncApiKey) return;
+  try{
+    const p={...S}; delete p.apiKey;
+    const r=await fetch(`${JBIN}/${S.syncBinId}`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':S.syncApiKey},
+      body:JSON.stringify(p)
+    });
+    if(r.ok) setSyncStatus('✓ Synced '+new Date().toLocaleTimeString());
+    else setSyncStatus('⚠ Sync push failed');
+  }catch(e){ setSyncStatus('⚠ Sync error — local data safe'); }
+}
+
+async function cloudPull(){
+  if(!S.syncBinId||!S.syncApiKey){ setSyncStatus('⚠ Enter Sync ID and Key first, then Save Settings'); return; }
+  setSyncStatus('Pulling from cloud…');
+  try{
+    const r=await fetch(`${JBIN}/${S.syncBinId}/latest`,{headers:{'X-Master-Key':S.syncApiKey}});
+    if(!r.ok) throw new Error();
+    const cloud=(await r.json()).record;
+    // Merge — take whichever device has more entries
+    if(cloud.sessions&&cloud.sessions.length>S.sessions.length) S.sessions=cloud.sessions;
+    if(cloud.journals&&cloud.journals.length>S.journals.length) S.journals=cloud.journals;
+    if(cloud.exposure&&cloud.exposure.length>S.exposure.length) S.exposure=cloud.exposure;
+    if(cloud.checks) Object.assign(S.checks,cloud.checks);
+    if(cloud.restDays) S.restDays=cloud.restDays;
+    const localKey=S.apiKey; // never overwrite local API key from cloud
+    Object.assign(S,cloud); S.apiKey=localKey;
+    localStorage.setItem('j_os_v4',JSON.stringify(S));
+    setSyncStatus('✓ Pulled! Reloading…');
+    setTimeout(()=>location.reload(),800);
+  }catch(e){ setSyncStatus('⚠ Pull failed — check Sync ID and Key'); }
+}
+
+async function createBin(){
+  const key=document.getElementById('sync-key-input').value.trim();
+  if(!key){ setSyncStatus('⚠ Paste your JSONBin Master Key first'); return; }
+  setSyncStatus('Creating sync bin…');
+  try{
+    const p={...S}; delete p.apiKey;
+    const r=await fetch(JBIN,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':'javier-os','X-Bin-Private':'true'},
+      body:JSON.stringify(p)
+    });
+    if(!r.ok) throw new Error();
+    const id=(await r.json()).metadata.id;
+    S.syncBinId=id; S.syncApiKey=key;
+    document.getElementById('sync-id-input').value=id;
+    document.getElementById('sync-key-input').value=key;
+    localStorage.setItem('j_os_v4',JSON.stringify(S));
+    setSyncStatus('✓ Sync bin created! Copy your Sync ID — you will need it on your other device.');
+  }catch(e){ setSyncStatus('⚠ Failed — check your JSONBin Master Key'); }
+}
+
+function saveSyncSettings(){
+  S.syncBinId=document.getElementById('sync-id-input').value.trim();
+  S.syncApiKey=document.getElementById('sync-key-input').value.trim();
+  localStorage.setItem('j_os_v4',JSON.stringify(S));
+  setSyncStatus('✓ Saved — tap Pull to sync now');
+}
+
+function copySyncId(){
+  const id=document.getElementById('sync-id-input').value.trim();
+  if(!id){ setSyncStatus('⚠ No Sync ID yet — create one first'); return; }
+  navigator.clipboard.writeText(id).then(()=>setSyncStatus('✓ Sync ID copied to clipboard'));
+}
+
+function setSyncStatus(msg){
+  const el=document.getElementById('sync-status'); if(el) el.textContent=msg;
+}
+
 load();
 
 /* ============================================================
@@ -922,6 +1042,10 @@ if(document.getElementById('d-date')) document.getElementById('d-date').textCont
 if(document.getElementById('m-date')) document.getElementById('m-date').textContent = dateShort;
 const di = document.getElementById('uw-date'); if(di) di.value = now.toISOString().split('T')[0];
 if(S.apiKey){ document.getElementById('api-input').value = S.apiKey; document.getElementById('key-status').textContent = '✓ Key loaded'; }
+// Restore sync settings in UI
+if(S.syncBinId)  { const el=document.getElementById('sync-id-input');  if(el) el.value=S.syncBinId; }
+if(S.syncApiKey) { const el=document.getElementById('sync-key-input'); if(el) el.value=S.syncApiKey; }
+if(S.syncBinId && S.syncApiKey){ setSyncStatus('✓ Sync configured — Bin ID: '+S.syncBinId.substring(0,8)+'…'); }
 try{ restoreChecks(); }catch(e){}
 try{ renderStats(); }catch(e){}
 try{ renderHist(); }catch(e){}
